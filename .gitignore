@@ -1,0 +1,23 @@
+   # Virtual Environment
+   venv/
+   env/
+   .env/
+
+   # Python cache
+   __pycache__/
+   *.pyc
+   *.pyo
+
+   # Jupyter Notebooks
+   .ipynb_checkpoints/
+
+   # Data and Models (Add your specific data folder names here if needed)
+   data/
+   *.pth
+   *.pt
+   *.h5
+   AnimalFace/
+
+   # OS files
+   .DS_Store
+   Thumbs.db
