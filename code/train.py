@@ -1,168 +1,157 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import torch
-import random
-import torch.backends.cudnn as cudnn
-random.seed(1000)
-torch.manual_seed(1000)
-np.random.seed(1000)
-cudnn.deterministic = True
-import torch.optim as optim
-from glob import glob
 import os
-from animal_face_dataset import *
-from Animal_Classification_Network import *
-from torch.utils.data.sampler import SubsetRandomSampler
+import random
+from glob import glob
+
+import matplotlib.pyplot as plt
+import numpy as np
+import torch
+import torch.backends.cudnn as cudnn
+import torch.nn as nn
+import torch.optim as optim
 from sklearn.model_selection import train_test_split
+from torch.utils.data.sampler import SubsetRandomSampler
+
+from animal_face_dataset import AnimalDataset
+from Animal_Classification_Network import CNN
+
+# !!! DO NOT MAKE ANY CHANGES IN THIS BLOCK !!!
+###############################################################################
+random.seed(1000)
+np.random.seed(1000)
+torch.manual_seed(1000)
+cudnn.deterministic = True
+LABEL_MAP = {0: "Cat", 1: "Dog", 2: "Bear", 3: "Chicken", 4: "Cow", 5: "Deer", 6: "Duck", 7: "Eagle",
+             8: "Elephant", 9: "Human", 10: "Lion", 11: "Monkey", 12: "Mouse", 13: "Panda", 14: "Pigeon",
+             15: "Pig", 16: "Rabbit", 17: "Sheep", 18: "Tiger", 19: "Wolf"}
+TRAIN_PATH = "AnimalFace/train/"
+IMAGE_SIZE = (150, 150)
 
 
-def main():
-
-    # hyper-parameters for network training
-    ###############################################################################
-    # TODO: Extend the binary classification to multi-class classification
-    N_CLASSES = 2 # num of classes
-    BATCH_SIZE = 32 # training batch size
-    EPOCH_NUMBER = 10 # num of epochs
-    VALIDATION_PER = 0.2 # Validation Percentage (you can play with this parameter)
-    LEARNING_RATE = 1e-4 # Learning Rate
-    IS_SHOW_IMAGES = False
-    ###############################################################################
+# TODO (Q1.3): Extend the binary classification to multi-class classification
+# (remember to also change N_CLASSES in test.py)
+###############################################################################
+N_CLASSES = 2           # num of classes
+###############################################################################
 
 
+# TODO (Q3 and Q4): Hyper-parameters for network training
+###############################################################################
+BATCH_SIZE = 32         # training batch size
+EPOCH_NUMBER = 10       # num of epochs
+VALIDATION_PER = 0.2    # validation percentage
+LEARNING_RATE = 1e-4    # learning rate
+###############################################################################
 
-    # Load training dataset
-    ###########################################################################################################
+
+def build_dataloaders(n_classes, batch_size, val_per):
     # DO NOT MAKE ANY CHANGES IN THIS BLOCK
-    label_map = {0: "Cat", 1: "Dog", 2: "Bear", 3: "Chicken", 4: "Cow", 5: "Deer", 6: "Duck", 7: "Eagle",
-                 8: "Elephant", 9: "Human", 10: "Lion", 11: "Monkey", 12: "Mouse", 13: "Panda", 14: "Pigeon",
-                 15: "Pig", 16: "Rabbit", 17: "Sheep", 18: "Tiger", 19: "Wolf"}
-    main_path = "../AnimalFace/train/"
+    # Split the full train dataset into "Train Set" and "Validation Set"
     paths = []
     labels = []
-
-    for i in range(N_CLASSES):
-        folder = label_map[i] + 'Head'
-        path_i = os.path.join(main_path, folder, "*")
-        for each_file in glob(path_i):
+    for i in range(n_classes):
+        folder = LABEL_MAP[i] + 'Head'
+        for each_file in glob(os.path.join(TRAIN_PATH, folder, "*")):
             paths.append(each_file)
             labels.append(i)
-    train_dataset = AnimalDataset(paths, labels, (150, 150), split="train")
-    val_dataset = AnimalDataset(paths, labels, (150, 150))
-    ###########################################################################################################
+    train_dataset = AnimalDataset(paths, labels, IMAGE_SIZE, split="train")
+    val_dataset = AnimalDataset(paths, labels, IMAGE_SIZE)
 
-
-
-    # Split the full train dataset into "Train Set" and "Validation Set"
-    ###########################################################################################################
-    # DO NOT MAKE ANY CHANGES IN THIS BLOCK
-    dataset_indices = list(range(0, len(train_dataset)))
-    train_indices, test_indices = train_test_split(dataset_indices, test_size=VALIDATION_PER, random_state=42)
+    dataset_indices = list(range(len(train_dataset)))
+    train_indices, val_indices = train_test_split(dataset_indices, test_size=val_per, random_state=42)
     print("Number of train samples: ", len(train_indices))
-    print("Number of validation samples: ", len(test_indices))
+    print("Number of validation samples: ", len(val_indices))
 
-    # Training Set
-    train_sampler = SubsetRandomSampler(train_indices)
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=BATCH_SIZE,
-                                               sampler=train_sampler)
-
-    # Validation Set: We have not used it in the training yet
-    # !!! Students are expected to use the validation set to monitor the training progress !!!
-    test_sampler = SubsetRandomSampler(test_indices)
-    validation_loader = torch.utils.data.DataLoader(val_dataset, batch_size=BATCH_SIZE,
-                                                    sampler=test_sampler)
-    ###########################################################################################################
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size,
+                                               sampler=SubsetRandomSampler(train_indices))
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size,
+                                             sampler=SubsetRandomSampler(val_indices))
+    return train_loader, val_loader
 
 
+def train_one_epoch(model, loader, criterion, optimizer, device):
+    """
+    Returns:
+        The average training loss over all batches of this epoch.
+    """
+    model.train()
+    epoch_loss = 0.0
+    for data_, target_ in loader:
+        # Load data and label
+        data_ = data_.to(device)
+        target_ = target_.to(device)
 
-    # Show image examples, require matplotlib package
-    # Not show by default
-    ####################################################
-    if IS_SHOW_IMAGES:
-        images, labels = iter(train_loader).next()
-        fig, axis = plt.subplots(3, 5, figsize=(15, 10))
-        for i, ax in enumerate(axis.flat):
-            with torch.no_grad():
-                npimg = images[i].numpy()
-                npimg = np.transpose(npimg, (1, 2, 0))
-                label = label_map[int(labels[i])]
-                ax.imshow(npimg)
-                ax.set(title=f"{label}")
-        plt.show()
-    ####################################################
+        # Clean up the gradients
+        optimizer.zero_grad()
 
+        # Get output from our CNN model and compute the loss
+        outputs = model(data_)
+        loss = criterion(outputs, target_)
 
+        # Backpropagation and optimizing our CNN model
+        loss.backward()
+        optimizer.step()
 
-    # Set up device (gpu or cpu), load CNN model, define Loss function and Optimizer
-    #################################################################################
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = CNN(N_CLASSES).to(device)
-    criterion = nn.CrossEntropyLoss()
-    # TODO: Change to other optimizers
-    optimizer = optim.RMSprop(model.parameters(), lr=LEARNING_RATE)
-    #################################################################################
-
-
-
-    # Training!!!
-    ####################################################################################
-    TRAIN_LOSS = []
-    VALIDATION_LOSS = []
-
-    for epoch in range(1, EPOCH_NUMBER + 1):
-        epoch_loss = 0.0
-        for data_, target_ in train_loader:
-            # Load data and label
-            target_ = target_.to(device)
-            data_ = data_.to(device)
-
-            # Clean up the gradients
-            optimizer.zero_grad()
-
-            # Get output from our CNN model and compute the loss
-            outputs = model(data_)
-            loss = criterion(outputs, target_)
-
-            # Backpropagation and optimizing our CNN model
-            loss.backward()
-            optimizer.step()
-
-            # Compute loss
-            epoch_loss = epoch_loss + loss.item()
-
-        # TODO: Add validation Loop here
-        #################################
-        # Your Code
-        #################################
-
-        # Append result to the lists for each epoch
-        ##############################################################################
-        TRAIN_LOSS.append(epoch_loss/len(train_loader))
-        print(f"Epoch {epoch}, Training Loss: {epoch_loss/len(train_loader)}")
-        # TODO: Append validation results to the lists for each epoch
-        # Your Code
-        ##############################################################################
+        epoch_loss += loss.item()
+    # Compute Loss
+    training_loss = epoch_loss / len(loader)
+    return training_loss
 
 
-    # Save the model
-    # TODO: Instead save the model here,
-    # TODO: you should save the model with the minimal validation loss
-    torch.save(model.state_dict(), "model.pt")
-
-
-    # TODO: Plot the training loss and validation loss in the same graph
-    #################################################################################
+def validate(model, loader, criterion, device):
+    """
+    TODO (Q3.1): Add validation Loop here
+    Don't forget to switch the model to evaluation mode (model.eval()) and to
+    disable gradient computation (torch.no_grad()) during validation.
+    Returns:
+        The average validation loss over all batches.
+    """
     # Your Code
+
+    raise NotImplementedError("TODO (Q3.1): implement validate()")
+
+
+def plot_losses(train_losses, val_losses=None):
+    """
+    TODO (Q3.1): plot the validation loss (`val_losses`) in the same graph.
+    """
+    epochs = range(1, len(train_losses) + 1)
     plt.subplots(figsize=(6, 4))
-    plt.plot(range(EPOCH_NUMBER), TRAIN_LOSS, color="blue", label="Training Set")
+    plt.plot(epochs, train_losses, color="blue", label="Training Set")
+    # Your Code
     plt.legend()
     plt.xlabel("Number of Epochs")
     plt.ylabel("Loss")
     plt.show()
-    #################################################################################
 
-    return
 
+def main():
+    train_loader, val_loader = build_dataloaders(N_CLASSES, BATCH_SIZE, VALIDATION_PER)
+
+
+    # Set up device (gpu or cpu), load CNN model, define Loss function and Optimizer
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = CNN(N_CLASSES).to(device)
+    criterion = nn.CrossEntropyLoss()
+    # TODO (Q4.1): Change to other optimizers
+    optimizer = optim.RMSprop(model.parameters(), lr=LEARNING_RATE)
+
+    # Training!!!
+    train_losses = []
+    val_losses = []
+    for epoch in range(1, EPOCH_NUMBER + 1):
+        train_loss = train_one_epoch(model, train_loader, criterion, optimizer, device)
+        train_losses.append(train_loss)
+        print(f"Epoch {epoch}, Training Loss: {train_loss}")
+
+        # TODO (Q3.1): Append validation results to the lists for each epoch. Hint: you can use the validate() function defined above.
+
+
+    # TODO (Q3.1): Instead of saving the model of the last epoch,
+    # you should save the model with the minimal validation loss inside the loop above.
+    # Remove the line below once you do so, otherwise it will overwrite your best model.
+    torch.save(model.state_dict(), "model.pt")
+
+    plot_losses(train_losses, val_losses)
 
 
 if __name__ == '__main__':

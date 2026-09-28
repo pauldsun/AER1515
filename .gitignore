@@ -11,7 +11,7 @@
    # Jupyter Notebooks
    .ipynb_checkpoints/
 
-   # Data and Models (Add your specific data folder names here if needed)
+   # Data and Models
    data/
    *.pth
    *.pt

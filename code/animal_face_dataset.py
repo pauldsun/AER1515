@@ -1,10 +1,20 @@
 from PIL import Image
 import torchvision.transforms as transforms
 
-transform_train = transforms.Compose([transforms.ToTensor()]) # TODO: add data augmentation transforms for training
-transform = transforms.Compose([transforms.ToTensor()])
+# TODO (Q3.2): Add at least two data augmentation transforms for training
+# (see https://pytorch.org/vision/stable/transforms.html).
+# Notes:
+#   - Images are already resized to 150x150 before this transform is applied, and the network
+#     expects 150x150 inputs, so the output of your transforms must still be 150x150.
+#   - Only the training set uses transform_train; the validation and test sets use `transform` below.
+transform_train = transforms.Compose([
+    # Your Code
+    transforms.ToTensor(),
+])
 
 # !!! DO NOT MAKE ANY CHANGES AFTER THIS LINE !!!
+
+transform = transforms.Compose([transforms.ToTensor()])
 
 class InvalidDatasetException(Exception):
     def __init__(self, len_of_paths, len_of_labels):
