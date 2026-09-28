@@ -27,17 +27,18 @@ TRAIN_PATH = "AnimalFace/train/"
 IMAGE_SIZE = (150, 150)
 
 
+
 # TODO (Q1.3): Extend the binary classification to multi-class classification
 # (remember to also change N_CLASSES in test.py)
 ###############################################################################
-N_CLASSES = 2           # num of classes
+N_CLASSES = 20           # num of classes
 ###############################################################################
 
 
 # TODO (Q3 and Q4): Hyper-parameters for network training
 ###############################################################################
 BATCH_SIZE = 32         # training batch size
-EPOCH_NUMBER = 10       # num of epochs
+EPOCH_NUMBER = 30       # num of epochs
 VALIDATION_PER = 0.2    # validation percentage
 LEARNING_RATE = 1e-4    # learning rate
 ###############################################################################

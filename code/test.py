@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 #######################################################################
 # TODO (Q1.3): Extend the binary classification to multi-class classification
-N_CLASSES = 2 # num of classes
+N_CLASSES = 20 # num of classes
 #######################################################################
 
 # !!! DO NOT MAKE ANY CHANGES AFTER THIS LINE !!!
