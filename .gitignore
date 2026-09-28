@@ -1,23 +1,24 @@
-   # Virtual Environment
-   venv/
-   env/
-   .env/
+# Virtual Environment
+venv/
+env/
+.env/
 
-   # Python cache
-   __pycache__/
-   *.pyc
-   *.pyo
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
 
-   # Jupyter Notebooks
-   .ipynb_checkpoints/
+# Jupyter Notebooks
+.ipynb_checkpoints/
 
-   # Data and Models
-   data/
-   *.pth
-   *.pt
-   *.h5
-   AnimalFace/
+# Data and Models
+data/
+*.pth
+*.pt
+*.h5
+AnimalFace/
+Images_Old/
 
-   # OS files
-   .DS_Store
-   Thumbs.db
+# OS files
+.DS_Store
+Thumbs.db
