@@ -10,6 +10,8 @@ import torch.nn as nn
 import torch.optim as optim
 from sklearn.model_selection import train_test_split
 from torch.utils.data.sampler import SubsetRandomSampler
+from torch.optim import Adam
+
 
 from animal_face_dataset import AnimalDataset
 from Animal_Classification_Network import CNN
@@ -37,10 +39,10 @@ N_CLASSES = 20           # num of classes
 
 # TODO (Q3 and Q4): Hyper-parameters for network training
 ###############################################################################
-BATCH_SIZE = 32         # training batch size
-EPOCH_NUMBER = 30       # num of epochs
+BATCH_SIZE = 16         # training batch size
+EPOCH_NUMBER = 50       # num of epochs
 VALIDATION_PER = 0.2    # validation percentage
-LEARNING_RATE = 1e-4    # learning rate
+LEARNING_RATE = 1e-3    # learning rate
 ###############################################################################
 
 
@@ -147,7 +149,7 @@ def main():
     model = CNN(N_CLASSES).to(device)
     criterion = nn.CrossEntropyLoss()
     # TODO (Q4.1): Change to other optimizers
-    optimizer = optim.RMSprop(model.parameters(), lr=LEARNING_RATE)
+    optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
     # Training!!!
     train_losses = []

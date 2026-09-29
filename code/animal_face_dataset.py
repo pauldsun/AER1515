@@ -9,7 +9,10 @@ import torchvision.transforms as transforms
 #   - Only the training set uses transform_train; the validation and test sets use `transform` below.
 transform_train = transforms.Compose([
     # Your Code
-    transforms.ToTensor(),
+    transforms.RandomHorizontalFlip(),
+    transforms.ColorJitter(brightness = 0.2, contrast = 0.2, hue = 0.05),
+    transforms.RandomRotation(degrees=30),
+    transforms.ToTensor()
 ])
 
 # !!! DO NOT MAKE ANY CHANGES AFTER THIS LINE !!!
