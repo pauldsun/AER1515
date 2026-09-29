@@ -5,7 +5,7 @@ class CNN(nn.Module):
 
     def __init__(self, n_classes):
         super(CNN, self).__init__()
-        print("Loaded BN Model")
+        print("Loaded Updated Model with Batch Normalization and Dropout Layers")
         # CNN Layers
         ####################################################################
         self.conv1 = nn.Conv2d(3, 32, kernel_size=3, stride=2, padding=1)
@@ -29,7 +29,7 @@ class CNN(nn.Module):
 
         # TODO (Q2.2): Add dropout layers here
         ##############################################################
-        # Your Code
+        self.dropout1 = nn.Dropout(0.25)
         ##############################################################
 
         # Fully Connected Layers
@@ -48,7 +48,12 @@ class CNN(nn.Module):
         x = self.maxpool(x)
         x = F.relu(self.bn4(self.conv4(x)))
         x = self.maxpool(x)
+
         x = x.view(-1, 256 * 2 * 2)
+
         x = self.fc1(x)
-        x = self.fc2(x)        
+        x = F.relu(x)
+        x = self.dropout1(x)
+
+        x = self.fc2(x)
         return x

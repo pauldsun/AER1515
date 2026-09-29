@@ -107,21 +107,34 @@ def validate(model, loader, criterion, device):
         The average validation loss over all batches.
     """
     # Your Code
+    model.eval()
+    epoch_loss = 0.0
+    with torch.no_grad():
+        for data_, target_ in loader:
+            data_ = data_.to(device)
+            target_ = target_.to(device)
 
-    raise NotImplementedError("TODO (Q3.1): implement validate()")
+            val_outputs = model(data_)
+            val_loss = criterion(val_outputs, target_)
+
+            epoch_loss += val_loss.item()
+        val_loss = epoch_loss / len(loader)
+    return val_loss
 
 
-def plot_losses(train_losses, val_losses=None):
+def plot_losses(train_losses, val_losses):
     """
     TODO (Q3.1): plot the validation loss (`val_losses`) in the same graph.
     """
     epochs = range(1, len(train_losses) + 1)
-    plt.subplots(figsize=(6, 4))
-    plt.plot(epochs, train_losses, color="blue", label="Training Set")
+    plt.figure(figsize=(6, 4))
+    plt.plot(epochs, train_losses, color="blue", label="Training")
     # Your Code
+    plt.plot(epochs, val_losses, color="orange", label="Validation")
     plt.legend()
     plt.xlabel("Number of Epochs")
     plt.ylabel("Loss")
+    plt.grid(True, alpha = 0.3)
     plt.show()
 
 
@@ -139,18 +152,27 @@ def main():
     # Training!!!
     train_losses = []
     val_losses = []
+    best_val = np.inf
     for epoch in range(1, EPOCH_NUMBER + 1):
         train_loss = train_one_epoch(model, train_loader, criterion, optimizer, device)
         train_losses.append(train_loss)
         print(f"Epoch {epoch}, Training Loss: {train_loss}")
 
         # TODO (Q3.1): Append validation results to the lists for each epoch. Hint: you can use the validate() function defined above.
+        val_loss = validate(model, val_loader, criterion, device)
+        val_losses.append(val_loss)
+        print(f"Epoch {epoch}, Validation Loss: {val_loss}")
 
+        # Save the model with the minimal validation loss
+        if val_loss < best_val:
+            best_val = val_loss
+            torch.save(model.state_dict(), "model.pt")
+        
 
     # TODO (Q3.1): Instead of saving the model of the last epoch,
     # you should save the model with the minimal validation loss inside the loop above.
     # Remove the line below once you do so, otherwise it will overwrite your best model.
-    torch.save(model.state_dict(), "model.pt")
+
 
     plot_losses(train_losses, val_losses)
 
